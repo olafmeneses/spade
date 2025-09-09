@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools>=70.0",
+    "setuptools>=77.0.0",
     "wheel"
     ]
 build-backend = "setuptools.build_meta"
@@ -11,7 +11,7 @@ dynamic = ["version", "dependencies"]
 description = "Smart Python Agent Development Environment"
 authors = [{ name = "Javi Palanca", email = "jpalanca@gmail.com" }]
 maintainers = [{ name = "Javi Palanca", email = "jpalanca@gmail.com" }]
-license = {text = "MIT"}
+license = "MIT"
 readme = "README.rst"
 keywords = ["spade"]
 requires-python = ">=3.9"
