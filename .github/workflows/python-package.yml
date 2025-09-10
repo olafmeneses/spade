@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest, windows-latest]
         python: ["3.9", "3.10", "3.11", "3.12"]
     name: ${{ matrix.os }} / Py ${{ matrix.python }}
 
@@ -77,15 +77,20 @@ jobs:
       run: |
         uv run pytest -q || pytest -q
 
-  coverage:
-    needs: test
+  test-linux:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.10", "3.11", "3.12"]
+    name: ubuntu-latest / Py ${{ matrix.python }} / with coverage
+
     steps:
     - uses: actions/checkout@v5
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: "3.12"
+        python-version: ${{ matrix.python }}
         cache: "pip"
         cache-dependency-path: |
           requirements.txt
@@ -101,7 +106,8 @@ jobs:
     - name: Run coverage
       run: |
         uv run coverage erase || coverage erase
-        uv run coverage run --source=spade -m pytest || coverage run --source=spade -m pytest
+        uv run coverage run --source=spade -m pytest -q || coverage run --source=spade -m pytest -q
+        uv run coverage xml -o coverage.xml || coverage xml -o coverage.xml
     - name: Coveralls
       uses: javipalanca/coveralls-python-action@develop
       with:
@@ -111,7 +117,7 @@ jobs:
       uses: codecov/codecov-action@v5
 
   coveralls_finish:
-    needs: coverage
+    needs: test-linux
     runs-on: ubuntu-latest
     steps:
     - name: Coveralls Finished
