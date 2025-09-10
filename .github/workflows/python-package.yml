@@ -27,9 +27,9 @@ jobs:
         run: |
           uv python install 3.12
           uv sync --extra dev || pip install -e .[dev]
-          uv tool install tox || pip install tox
       - name: Lint
-        run: "tox -e lint"
+        run: |
+          uv run tox -e lint || tox -e lint
 
   test:
     runs-on: ${{ matrix.os }}
@@ -116,14 +116,13 @@ jobs:
         uv python install ${{ matrix.python }}
         uv sync --extra dev || pip install -e .[dev]
         uv tool install ruff || pip install ruff
-        uv tool install pytest || pip install pytest
     - name: Lint with ruff
       run: |
         # ruff lint
         ruff check spade
     - name: Test with pytest
       run: |
-        pytest
+        uv run pytest || pytest
 
   coverage:
     runs-on: ubuntu-latest
@@ -142,11 +141,10 @@ jobs:
       run: |
         uv python install ${{ matrix.python-version }}
         uv sync --extra dev || pip install -e .[dev]
-        uv tool install coverage || pip install coverage
     - name: Run coverage
       run: |
-        coverage erase
-        coverage run --source=spade -m pytest
+        uv run coverage erase || coverage erase
+        uv run coverage run --source=spade -m pytest || coverage run --source=spade -m pytest
     - name: Coveralls
       uses: javipalanca/coveralls-python-action@develop
       with:
