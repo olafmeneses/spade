@@ -8,20 +8,32 @@ on:
     branches: [ master, develop ]
     tags:
       - "*"
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "**/*.rst"
   pull_request:
     branches:
       - "*"
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "**/*.rst"
 
 jobs:
 
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
@@ -39,80 +51,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name:
-          - "ubuntu-py39"
-          - "ubuntu-py310"
-          - "ubuntu-py311"
-          - "ubuntu-py312"
-
-          - "macos-py39"
-          - "macos-py310"
-          - "macos-py311"
-          - "macos-py312"
-
-          - "windows-py39"
-          - "windows-py310"
-          - "windows-py311"
-          - "windows-py312"
-
-        include:
-          - name: "ubuntu-py39"
-            python: "3.9"
-            os: ubuntu-latest
-            tox_env: "py39"
-          - name: "ubuntu-py310"
-            python: "3.10"
-            os: ubuntu-latest
-            tox_env: "py310"
-          - name: "ubuntu-py311"
-            python: "3.11"
-            os: ubuntu-latest
-            tox_env: "py311"
-          - name: "ubuntu-py312"
-            python: "3.12"
-            os: ubuntu-latest
-            tox_env: "py312"
-
-          - name: "macos-py39"
-            python: "3.9"
-            os: macos-latest
-            tox_env: "py39"
-          - name: "macos-py310"
-            python: "3.10"
-            os: macos-latest
-            tox_env: "py310"
-          - name: "macos-py311"
-            python: "3.11"
-            os: macos-latest
-            tox_env: "py311"
-          - name: "macos-py312"
-            python: "3.12"
-            os: macos-latest
-            tox_env: "py312"
-
-          - name: "windows-py39"
-            python: "3.9"
-            os: windows-latest
-            tox_env: "py39"
-          - name: "windows-py310"
-            python: "3.10"
-            os: windows-latest
-            tox_env: "py310"
-          - name: "windows-py311"
-            python: "3.11"
-            os: windows-latest
-            tox_env: "py311"
-          - name: "windows-py312"
-            python: "3.12"
-            os: windows-latest
-            tox_env: "py312"
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.9", "3.10", "3.11", "3.12"]
+    name: ${{ matrix.os }} / Py ${{ matrix.python }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python }}
+        cache: "pip"
+        cache-dependency-path: |
+          requirements.txt
+          pyproject.toml
     - name: Install uv
       uses: astral-sh/setup-uv@v6
       with:
@@ -121,27 +73,23 @@ jobs:
     - name: Set up dependencies
       run: |
         uv sync --extra dev || pip install -e .[dev]
-        uv tool install ruff || pip install ruff
-    - name: Lint with ruff
-      run: |
-        # ruff lint
-        ruff check spade
     - name: Test with pytest
       run: |
-        uv run pytest || pytest
+        uv run pytest -q || pytest -q
 
   coverage:
+    needs: test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.12"
+        cache: "pip"
+        cache-dependency-path: |
+          requirements.txt
+          pyproject.toml
     - name: Install uv
       uses: astral-sh/setup-uv@v6
       with:
@@ -160,7 +108,7 @@ jobs:
         parallel: true
         flag-name: Unit Test
     - name: Send coverage report to codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v5
 
   coveralls_finish:
     needs: coverage
