@@ -26,13 +26,6 @@ if sys.platform.startswith("win32"):
 else:
     requirements.append("uvloop>=0.21.0")
 
-setup_requirements = [
-    "pytest-runner",
-    # put setup requirements (distutils extensions, etc.) here
-]
-
-test_requirements = parse_requirements("requirements_dev.txt")
-
 
 """
 Check for a slixmpp installation in the current env.
@@ -73,8 +66,5 @@ setup(
         "Operating System :: Microsoft :: Windows",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Topic :: Internet :: XMPP",
-    ],
-    test_suite="tests",
-    tests_require=test_requirements,
-    setup_requires=setup_requirements,
+    ]
 )
