@@ -71,11 +71,32 @@ jobs:
         restore-keys: |
           uv-windows-latest-py${{ matrix.python }}-
 
-    - name: Install uv
+    - name: Install uv (Fast Windows Installation)
+      if: runner.os == 'Windows'
+      timeout-minutes: 5
+      run: |
+        # Use irm (Invoke-RestMethod) which is faster than the setup action on Windows
+        $ErrorActionPreference = "Stop"
+        Write-Host "Downloading and installing UV..."
+        irm https://astral.sh/uv/0.8.15/install.ps1 | iex
+        
+        # Add to PATH for current session and future steps
+        $uvPath = "$env:USERPROFILE\.local\bin"
+        $env:PATH = "$uvPath;$env:PATH"
+        echo "$uvPath" >> $env:GITHUB_PATH
+        
+        # Verify installation
+        Write-Host "Verifying UV installation..."
+        & "$uvPath\uv.exe" --version
+        Write-Host "UV installed successfully"
+      shell: powershell
+
+    - name: Install uv (Non-Windows)
+      if: runner.os != 'Windows'
       uses: astral-sh/setup-uv@v6
       with:
         version: "0.8.15"
-        enable-cache: ${{ runner.os != 'Windows' }}  # Use built-in caching for non-Windows
+        enable-cache: true
 
     - name: Set up dependencies
       run: |
