@@ -1,0 +1,55 @@
+name: Build UV Global Cache (Windows Only)
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - "uv.lock"
+      - "pyproject.toml"
+      - "requirements.txt"
+  workflow_dispatch:
+  schedule:
+    # Every 5 days at midnight UTC, before cache expiry (7 days)
+    - cron: "0 0 */5 * *"
+
+jobs:
+  build-cache-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.10", "3.11", "3.12"]
+    
+    name: Cache Windows / Python ${{ matrix.python }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.15"
+          enable-cache: false  # We manage caching manually
+
+      - name: Install dependencies and populate cache
+        run: |
+          echo "Building global UV cache for Windows Python ${{ matrix.python }}..."
+          uv sync --extra dev
+          echo "Cache populated successfully"
+
+      - name: Save uv caches (Windows)
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~\AppData\Local\uv\cache
+            ~\AppData\Roaming\uv
+            .venv
+          key: uv-windows-latest-py${{ matrix.python }}-${{ hashFiles('uv.lock', 'pyproject.toml') }}
