@@ -67,7 +67,7 @@ jobs:
           ~\AppData\Local\uv\cache
           ~\AppData\Roaming\uv
           .venv
-        key: uv-windows-latest-py${{ matrix.python }}-${{ hashFiles('uv.lock', 'pyproject.toml') }}
+        key: uv-windows-latest-py${{ matrix.python }}-${{ hashFiles('uv.lock', 'pyproject.toml', 'requirements.txt') }}
         restore-keys: |
           uv-windows-latest-py${{ matrix.python }}-
 
@@ -98,7 +98,7 @@ jobs:
           ~\AppData\Local\uv\cache
           ~\AppData\Roaming\uv
           .venv
-        key: uv-windows-latest-py${{ matrix.python }}-${{ hashFiles('uv.lock', 'pyproject.toml') }}
+        key: uv-windows-latest-py${{ matrix.python }}-${{ hashFiles('uv.lock', 'pyproject.toml', 'requirements.txt') }}
 
     - name: Test with pytest
       run: |
