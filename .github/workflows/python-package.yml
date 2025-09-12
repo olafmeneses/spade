@@ -41,14 +41,13 @@ jobs:
         run: |
           uv run tox -e lint
 
-  test:
-    runs-on: ${{ matrix.os }}
+  test-windows:
+    runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
         python: ["3.9", "3.10", "3.11", "3.12"]
-    name: ${{ matrix.os }} / Py ${{ matrix.python }}
+    name: test (Windows) / Py ${{ matrix.python }}
 
     steps:
     - uses: actions/checkout@v5
@@ -58,8 +57,7 @@ jobs:
       with:
         python-version: ${{ matrix.python }}
 
-    - name: Restore global uv cache (Windows only)
-      if: runner.os == 'Windows'
+    - name: Restore global uv cache
       id: cache-restore-windows
       uses: actions/cache/restore@v4
       with:
@@ -71,27 +69,19 @@ jobs:
         restore-keys: |
           uv-windows-latest-py${{ matrix.python }}-
 
-    - name: Install uv (Windows)
-      if: runner.os == 'Windows'
+    - name: Install uv
       run: |
         irm https://astral.sh/uv/0.8.15/install.ps1 | iex
         $env:PATH = "$env:USERPROFILE\.local\bin;$env:PATH"
         Add-Content -Path $env:GITHUB_PATH -Value "$env:USERPROFILE\.local\bin"
       shell: powershell
 
-    - name: Install uv (Non-Windows)
-      if: runner.os != 'Windows'
-      uses: astral-sh/setup-uv@v6
-      with:
-        version: "0.8.15"
-        enable-cache: true
-
     - name: Set up dependencies
       run: |
         uv sync --extra dev
 
-    - name: Save uv cache (Windows only - if cache miss)
-      if: runner.os == 'Windows' && steps.cache-restore-windows.outputs.cache-hit != 'true'
+    - name: Save uv cache (if cache miss)
+      if: steps.cache-restore-windows.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
         path: |
@@ -104,13 +94,43 @@ jobs:
       run: |
         uv run pytest -q
 
+  test-macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.10", "3.11", "3.12"]
+    name: test (macOS) / Py ${{ matrix.python }}
+
+    steps:
+    - uses: actions/checkout@v5
+    
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.8.15"
+        enable-cache: true
+
+    - name: Set up dependencies
+      run: |
+        uv sync --extra dev
+
+    - name: Test with pytest
+      run: |
+        uv run pytest -q
+
   test-linux:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         python: ["3.9", "3.10", "3.11", "3.12"]
-    name: ubuntu-latest / Py ${{ matrix.python }} / with coverage
+    name: test (Ubuntu) / Py ${{ matrix.python }} with coverage
 
     steps:
     - uses: actions/checkout@v5
