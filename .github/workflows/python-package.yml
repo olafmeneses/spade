@@ -36,10 +36,10 @@ jobs:
           version: "0.8.15"
       - name: Set up dependencies
         run: |
-          uv sync --extra dev || pip install -e .[dev]
+          uv sync --extra dev
       - name: Lint
         run: |
-          uv run tox -e lint || tox -e lint
+          uv run tox -e lint
 
   test:
     runs-on: ${{ matrix.os }}
@@ -88,7 +88,7 @@ jobs:
 
     - name: Set up dependencies
       run: |
-        uv sync --extra dev || pip install -e .[dev]
+        uv sync --extra dev
 
     - name: Save uv cache (Windows only - if cache miss)
       if: runner.os == 'Windows' && steps.cache-restore-windows.outputs.cache-hit != 'true'
@@ -102,7 +102,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        uv run pytest -q || pytest -q
+        uv run pytest -q
 
   test-linux:
     runs-on: ubuntu-latest
@@ -124,12 +124,12 @@ jobs:
         version: "0.8.15"
     - name: Set up dependencies
       run: |
-        uv sync --extra dev || pip install -e .[dev]
+        uv sync --extra dev
     - name: Run coverage
       run: |
-        uv run coverage erase || coverage erase
-        uv run coverage run --source=spade -m pytest -q || coverage run --source=spade -m pytest -q
-        uv run coverage xml -o coverage.xml || coverage xml -o coverage.xml
+        uv run coverage erase
+        uv run coverage run --source=spade -m pytest -q
+        uv run coverage xml -o coverage.xml
     - name: Coveralls
       uses: javipalanca/coveralls-python-action@develop
       with:
