@@ -1,3 +1,6 @@
+# This workflow is dedicated to building and saving the UV cache for Windows environments.
+# It is triggered on dependency file changes, manually, or on a schedule to warm the cache
+# for other workflows, helping to speed up their execution by providing a pre-built cache.
 name: Build UV Global Cache (Windows Only)
 
 on:
@@ -34,10 +37,11 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: "0.8.15"
-          enable-cache: false  # We manage caching manually
+        run: |
+          irm https://astral.sh/uv/0.8.15/install.ps1 | iex
+          $env:PATH = "$env:USERPROFILE\.local\bin;$env:PATH"
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:USERPROFILE\.local\bin"
+        shell: powershell
 
       - name: Install dependencies and populate cache
         run: |
@@ -52,4 +56,4 @@ jobs:
             ~\AppData\Local\uv\cache
             ~\AppData\Roaming\uv
             .venv
-          key: uv-windows-latest-py${{ matrix.python }}-${{ hashFiles('uv.lock', 'pyproject.toml') }}
+          key: uv-windows-latest-py${{ matrix.python }}-${{ hashFiles('uv.lock', 'pyproject.toml', 'requirements.txt') }}
