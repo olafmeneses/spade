@@ -41,125 +41,20 @@ jobs:
         run: |
           uv run tox -e lint
 
-  test-windows:
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.9", "3.10", "3.11", "3.12"]
-    name: test (Windows) / Py ${{ matrix.python }}
+  windows-tests:
+    name: test (Windows)
+    uses: ./.github/workflows/test-windows.yml
 
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python }}
+  macos-tests:
+    name: test (macOS)
+    uses: ./.github/workflows/test-macos.yml
 
-    - name: Restore global uv cache
-      id: cache-restore-windows
-      uses: actions/cache/restore@v4
-      with:
-        path: |
-          ~\AppData\Local\uv\cache
-          ~\AppData\Roaming\uv
-          .venv
-        key: uv-windows-latest-py${{ matrix.python }}-${{ hashFiles('uv.lock', 'pyproject.toml', 'requirements.txt') }}
-        restore-keys: |
-          uv-windows-latest-py${{ matrix.python }}-
-
-    - name: Install uv
-      run: |
-        irm https://astral.sh/uv/0.8.15/install.ps1 | iex
-        $env:PATH = "$env:USERPROFILE\.local\bin;$env:PATH"
-        Add-Content -Path $env:GITHUB_PATH -Value "$env:USERPROFILE\.local\bin"
-      shell: powershell
-
-    - name: Set up dependencies
-      run: |
-        uv sync --extra dev
-
-    - name: Save uv cache (if cache miss)
-      if: steps.cache-restore-windows.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          ~\AppData\Local\uv\cache
-          ~\AppData\Roaming\uv
-          .venv
-        key: uv-windows-latest-py${{ matrix.python }}-${{ hashFiles('uv.lock', 'pyproject.toml', 'requirements.txt') }}
-
-    - name: Test with pytest
-      run: |
-        uv run pytest -q
-
-  test-macos:
-    runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.9", "3.10", "3.11", "3.12"]
-    name: test (macOS) / Py ${{ matrix.python }}
-
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python }}
-
-    - name: Install uv
-      uses: astral-sh/setup-uv@v6
-      with:
-        version: "0.8.15"
-        enable-cache: true
-
-    - name: Set up dependencies
-      run: |
-        uv sync --extra dev
-
-    - name: Test with pytest
-      run: |
-        uv run pytest -q
-
-  test-linux:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.9", "3.10", "3.11", "3.12"]
-    name: test (Ubuntu) / Py ${{ matrix.python }} with coverage
-
-    steps:
-    - uses: actions/checkout@v5
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python }}
-    - name: Install uv
-      uses: astral-sh/setup-uv@v6
-      with:
-        version: "0.8.15"
-    - name: Set up dependencies
-      run: |
-        uv sync --extra dev
-    - name: Run coverage
-      run: |
-        uv run coverage erase
-        uv run coverage run --source=spade -m pytest -q
-        uv run coverage xml -o coverage.xml
-    - name: Coveralls
-      uses: javipalanca/coveralls-python-action@develop
-      with:
-        parallel: true
-        flag-name: Unit Test
-    - name: Send coverage report to codecov
-      uses: codecov/codecov-action@v5
+  ubuntu-tests:
+    name: test (Ubuntu)
+    uses: ./.github/workflows/test-linux-with-coverage.yml
 
   coveralls_finish:
-    needs: test-linux
+    needs: ubuntu-tests
     runs-on: ubuntu-latest
     steps:
     - name: Coveralls Finished
